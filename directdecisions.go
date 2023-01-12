@@ -50,9 +50,13 @@ func NewClient(key string, o *ClientOptions) (c *Client) {
 	if o == nil {
 		o = new(ClientOptions)
 	}
-	return newClient(httpClientWithTransport(o.HTTPClient, o.BaseURL, func(r *http.Request) {
-		r.Header.Set("X-Key", key)
-	}))
+	authFunc := func(r *http.Request) {}
+	if key != "" {
+		authFunc = func(r *http.Request) {
+			r.Header.Set("Authorization", "Bearer "+key)
+		}
+	}
+	return newClient(httpClientWithTransport(o.HTTPClient, o.BaseURL, authFunc))
 }
 
 // newClient constructs a new *Client with the provided http Client, which

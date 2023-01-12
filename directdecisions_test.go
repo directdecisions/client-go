@@ -19,10 +19,10 @@ import (
 )
 
 func TestClient_key(t *testing.T) {
-	client, mux, _ := newClient(t, "myauthkey")
+	client, mux, _ := newClient(t, "xapp-1-my-authkey")
 
 	mux.HandleFunc("/v1/votings", requireMethod("POST", func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("X-Key") != "myauthkey" {
+		if r.Header.Get("Authorization") != "Bearer xapp-1-my-authkey" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
