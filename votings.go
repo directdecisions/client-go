@@ -107,31 +107,43 @@ type Result struct {
 	Index      int
 	Wins       int
 	Percentage float64
+	Strength   int
+	Advantage  int
+}
+
+type computeResultsAPIResponse struct {
+	Results []Result `json:"results"`
+	Tie     bool     `json:"tie"`
+	Duels   []Duel   `json:"duels"`
 }
 
 func (s *VotingsService) Results(ctx context.Context, votingID string) (results []Result, tie bool, err error) {
-
-	type votingResultAPIResponse struct {
-		Choice     string  `json:"choice"`
-		Index      int     `json:"index"`
-		Wins       int     `json:"wins"`
-		Percentage float64 `json:"percentage"`
-	}
-
-	type computeResultsAPIResponse struct {
-		Results []votingResultAPIResponse `json:"results"`
-		Tie     bool                      `json:"tie"`
-	}
 
 	var response *computeResultsAPIResponse
 	if err = s.client.request(ctx, http.MethodGet, "v1/votings/"+url.PathEscape(votingID)+"/results", nil, &response); err != nil {
 		return nil, false, err
 	}
 
-	results = make([]Result, len(response.Results))
-	for i, r := range response.Results {
-		results[i] = Result(r)
+	return response.Results, response.Tie, nil
+}
+
+type Duel struct {
+	Left  ChoiceStrength
+	Right ChoiceStrength
+}
+
+type ChoiceStrength struct {
+	Choice   string
+	Index    int
+	Strength int
+}
+
+func (s *VotingsService) Duels(ctx context.Context, votingID string) (results []Result, duels []Duel, tie bool, err error) {
+
+	var response *computeResultsAPIResponse
+	if err = s.client.request(ctx, http.MethodGet, "v1/votings/"+url.PathEscape(votingID)+"/results/duels", nil, &response); err != nil {
+		return nil, nil, false, err
 	}
 
-	return results, response.Tie, nil
+	return response.Results, response.Duels, response.Tie, nil
 }
